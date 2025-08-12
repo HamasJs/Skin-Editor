@@ -111,8 +111,13 @@ class Config extends LitElement {
       this.ui.persistence.set("selectedTab", tabName);
     })
 
-    const selectedTab = this.ui.persistence.get("selectedTab", "tool");
-    tabs.select(t[selectedTab]);
+    const selectedTab = this.ui.persistence.get("selectedTab", Object.keys(t)[0]);
+    if (t[selectedTab]) {
+      tabs.select(t[selectedTab]);
+    } else if (Object.keys(t).length > 0) {
+      // If the saved tab doesn't exist, select the first available tab
+      tabs.select(t[Object.keys(t)[0]]);
+    }
 
     return tabs;
   }

@@ -146,7 +146,11 @@ class Icon extends LitElement {
 
   render() {
     const iconSrc = ICON_MAP[this.icon];
-    const isSvg = iconSrc.endsWith('.svg');
+    if (!iconSrc) {
+      console.warn(`Icon '${this.icon}' not found in ICON_MAP`);
+      return document.createElement('div');
+    }
+    const isSvg = typeof iconSrc === 'string' ? iconSrc.endsWith('.svg') : false;
     
     if (isSvg) {
       // For SVGs, use the mask approach
