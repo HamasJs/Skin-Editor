@@ -1,7 +1,7 @@
 import { css, html, LitElement } from "lit";
 import "./controls"
 import TabGroup from "../misc/tab_group";
-import ToolTab from "./tabs/tool";
+// import ToolTab from "./tabs/tool";
 import LayersTab from "./tabs/layers";
 import ImportTab from "./tabs/import";
 import ExportTab from "./tabs/export";
@@ -83,7 +83,7 @@ class Config extends LitElement {
     this.tabGroup = new TabGroup();
 
     this.tabs = {
-      tool: new ToolTab(this.ui),
+      // tool: new ToolTab(this.ui),
       layers: new LayersTab(this.editor),
       import: new ImportTab(this.ui),
       export: new ExportTab(this.ui),
@@ -100,7 +100,7 @@ class Config extends LitElement {
 
     const t = this.tabs;
 
-    tabs.registerTab(t.tool);
+    // tabs.registerTab(t.tool);
     // tabs.registerTab(t.layers);
     // tabs.registerTab(t.import);
     // tabs.registerTab(t.export);

@@ -1,32 +1,47 @@
 import { css, html, LitElement, unsafeCSS } from "lit";
 import Tool from "./tool";
 import PartToggle from "./part_toggles";
+import Modal from "../misc/modal";
+import ColorPicker from "../misc/color_picker";
 
 import imgSteveAlex from "/assets/images/steve_alex.png";
 
 class Toolbar extends LitElement {
   static styles = css`
     :host {
-      display: block;
-      height: auto;
-      padding: 0.25rem;
-      width: 3.75rem;
-      background-color: #131315;
-      box-sizing: border-box;
-    }
-
-    #toolbar {
-      height: 100%;
+      background-color: transparent;
+      padding: 8px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      gap: 0.25rem;
+      gap: 8px;
     }
 
     #tools {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 8px;
+    }
+
+    #tools ncrs-tool,
+    #tools ncrs-button {
+      --ncrs-button-bg: #333333;
+      --ncrs-button-bg-hover: #444444;
+      --ncrs-button-bg-active: #555555;
+      --ncrs-button-color: white;
+      --ncrs-button-border-radius: 24px;
+      height: 48px;
+      width: 48px;
+      min-width: 48px;
+    }
+
+    #tools ncrs-tool.active,
+    #tools ncrs-button.active {
+      --ncrs-button-bg: #555555;
+    }
+
+    #tools ncrs-icon {
+      width: 24px;
+      height: 24px;
     }
 
     .ncrs-toggle-row {
@@ -121,10 +136,9 @@ class Toolbar extends LitElement {
     this._setupEvents();
 
     return html`
-      <div id="toolbar">
-        ${this._renderTools()}
-        ${this._renderToggles()}
-      </div>
+      ${this._renderTools()}
+      ${this._renderToggles()}
+      ${this.colorModal}
     `;
   }
 
@@ -142,24 +156,87 @@ class Toolbar extends LitElement {
 
   _renderTools() {
     const editor = this.ui.editor;
-    const div = document.createElement("div");
-    div.id = "tools";
 
-    editor.tools.forEach(tool => {
-      const newTool = new Tool(this.ui, tool);
+    return html`
+      <div id="tools">
+        ${editor.tools.map(tool => {
+          const newTool = new Tool(this.ui, tool);
+          if (tool.properties.id === "sculpt") {
+            newTool.disabled = !editor.config.get("overlayVisible", false);
+            editor.config.addEventListener("overlayVisible-change", event => {
+              newTool.disabled = !event.detail;
+            });
+          }
+          return newTool;
+        })}
+        <!-- Color Picker Button -->
+        <ncrs-button 
+          class="color-picker-btn" 
+          @click=${() => this._showColorModal()}
+          title="Open Color Picker"
+        >
+          <div style="width: 24px; height: 24px; border-radius: 4px; background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);"></div>
+        </ncrs-button>
+      </div>
+    `;
+  }
 
-      if (tool.properties.id === "sculpt") {
-        newTool.disabled = !editor.config.get("overlayVisible", false);
-        editor.config.addEventListener("overlayVisible-change", event => {
-          newTool.disabled = !event.detail;
-        })
-      }
-
-      div.appendChild(newTool);
+_showColorModal() {
+  if (!this.colorModal) {
+    this.colorModal = document.createElement('div');
+    Object.assign(this.colorModal.style, {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
     });
 
-    return div;
+    // Create picker instance from your file
+    this.colorPicker = new ColorPicker(this.ui.editor);
+    this.colorPicker.style.width = '320px';
+    this.colorPicker.style.background = '#1A1A1A';
+    this.colorPicker.style.borderRadius = '8px';
+    this.colorPicker.style.padding = '10px';
+    this.colorPicker.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
+
+    // Prevent dragging
+    this.colorPicker.draggable = false;
+
+    // Append picker to modal
+    this.colorModal.appendChild(this.colorPicker);
+    document.body.appendChild(this.colorModal);
+
+    // Close when clicking outside picker
+    this.colorModal.addEventListener('click', (e) => {
+      if (e.target === this.colorModal) {
+        this.colorModal.remove();
+        this.colorModal = null;
+      }
+    });
+
+    // Listen for color changes
+    this.colorPicker.addEventListener('color-change', (e) => {
+      const color = e.detail.color;
+      this.ui.editor.toolConfig.set("color", color);
+    });
   }
+
+  // Set current color before showing
+  const current = this.ui.editor.toolConfig.get("color");
+  if (current && this.colorPicker?.setColor) {
+    this.colorPicker.setColor(current);
+  }
+}
+
+  
+  
+  
 
   _renderToggles() {
     const cfg = this.ui.editor.config;

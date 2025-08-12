@@ -13,6 +13,8 @@ class Modal extends LitElement {
 
       flex-direction: column;
       align-items: center;
+      justify-content: center;
+      z-index: 9999;
       
       background-color: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(4px);
@@ -28,12 +30,30 @@ class Modal extends LitElement {
     }
 
     :host([open]) {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+
+    ::slotted(div) {
+      background: var(--background-color, #2c2c2c);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
 
     slot {
-      width: 100%;
-      height: 100%;
+      /* Centered content with reasonable bounds */
+      max-width: 90vw;
+      max-height: 90vh;
+      display: block;
     }
   `
 

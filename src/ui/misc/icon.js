@@ -12,8 +12,8 @@ import imgIconBoxHalfChecked from "/assets/images/icons/box-half-checked.svg";
 import imgIconBoxInnerChecked from "/assets/images/icons/box-inner-checked.svg";
 import imgIconBoxOuterChecked from "/assets/images/icons/box-outer-checked.svg";
 import imgIconBoxUnchecked from "/assets/images/icons/box-unchecked.svg";
-import imgIconBrush from "/assets/images/icons/tools/brush.svg";
-import imgIconBucket from "/assets/images/icons/tools/bucket.svg";
+import imgIconBrush from "../../../assets/images/icons/brush.png";
+import imgIconBucket from "../../../assets/images/icons/bucket.png";
 import imgIconCamo from "/assets/images/icons/modifiers/camo.svg";
 import imgIconCgol from "/assets/images/icons/cgol.svg";
 import imgIconCircle from "/assets/images/icons/modifiers/circle.svg";
@@ -32,7 +32,7 @@ import imgIconForce2 from "/assets/images/icons/modifiers/force-2.svg";
 import imgIconForce3 from "/assets/images/icons/modifiers/force-3.svg";
 import imgIconForce4 from "/assets/images/icons/modifiers/force-4.svg";
 import imgIconForce5 from "/assets/images/icons/modifiers/force-5.svg";
-import imgIconFullscreen from "/assets/images/icons/misc/fullscreen.svg";
+import imgIconFullscreen from "../../../assets/images/icons/fullscreen.png";  
 import imgIconJitter from "/assets/images/icons/jitter.svg";
 import imgIconLightMode from "/assets/images/icons/misc/light-mode.svg";
 import imgIconLighten from "/assets/images/icons/modifiers/lighten.svg";
@@ -145,11 +145,37 @@ class Icon extends LitElement {
   }
 
   render() {
-    const div = document.createElement("div");
-    div.style.maskImage = `url("${ICON_MAP[this.icon]}")`;
-    div.style.backgroundColor = this.color;
-
-    return div;
+    const iconSrc = ICON_MAP[this.icon];
+    const isSvg = iconSrc.endsWith('.svg');
+    
+    if (isSvg) {
+      // For SVGs, use the mask approach
+      const div = document.createElement("div");
+      div.style.maskImage = `url("${iconSrc}")`;
+      div.style.webkitMaskImage = `url("${iconSrc}")`;
+      div.style.backgroundColor = this.color || 'currentColor';
+      return div;
+    } else {
+      // For PNGs, use an img element with transparent background
+      const container = document.createElement("div");
+      container.style.width = '100%';
+      container.style.height = '100%';
+      container.style.display = 'flex';
+      container.style.alignItems = 'center';
+      container.style.justifyContent = 'center';
+      container.style.backgroundColor = 'transparent';
+      
+      const img = document.createElement("img");
+      img.src = iconSrc;
+      img.style.maxWidth = '100%';
+      img.style.maxHeight = '100%';
+      img.style.objectFit = 'contain';
+      img.style.display = 'block';
+      img.style.pointerEvents = 'none';
+      
+      container.appendChild(img);
+      return container;
+    }
   }
 }
 

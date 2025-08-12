@@ -25,7 +25,7 @@ import { del } from "idb-keyval";
 import passesColorAccuracyTest from "./misc/color_accuracy_test";
 
 class UI extends LitElement {
-  static styles = css`
+static styles = css`
     :host {
       width: 100%;
       height: 100%;
@@ -133,7 +133,7 @@ class UI extends LitElement {
         padding-left: 0.2rem;
       }
 
-      /* Adjust theme and fullscreen buttons for mobile */
+      /* Adjust theme and fullscreen buttons for mobile - keep them positioned relative to editor */
       #themeSwitch {
         top: 4px;
         left: 4px;
@@ -145,9 +145,31 @@ class UI extends LitElement {
         left: 4px;
       }
 
+      #rotationLockSwitch {
+        top: 52px;
+        left: 4px;
+      }
+
       #themeSwitch ncrs-icon,
       #fullscreenSwitch ncrs-icon,
-      #fullscreenSwitchLightMode ncrs-icon {
+      #fullscreenSwitchLightMode ncrs-icon,
+      #rotationLockSwitch ncrs-icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      #undoButton {
+        top: 4px;
+        right: 4px;
+      }
+      
+      #redoButton {
+        top: 28px;
+        right: 4px;
+      }
+
+      #undoButton img,
+      #redoButton img {
         width: 16px;
         height: 16px;
       }
@@ -221,6 +243,7 @@ class UI extends LitElement {
     #editor {
       background-color: #191919;
       background-image: var(--editor-bg);
+      position: relative; /* CRITICAL: Make editor a positioning context */
     }
 
     #layers {
@@ -289,17 +312,19 @@ class UI extends LitElement {
       --icon-color: #aaaaaa;
     }
 
+    /* FIXED: All editor overlay buttons positioned relative to #editor */
     #themeSwitch,
     #rotationLockSwitch,
     #undoButton,
-    #redoButton {
+    #redoButton,
+    #fullscreenSwitch,
+    #fullscreenSwitchLightMode {
       all: unset;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      position: absolute;
-      left: 8px;
+      position: absolute; /* Positioned relative to #editor which has position: relative */
       z-index: 10;
       width: 32px;
       height: 32px;
@@ -311,43 +336,62 @@ class UI extends LitElement {
     #themeSwitch:hover,
     #rotationLockSwitch:hover,
     #undoButton:hover,
-    #redoButton:hover {
+    #redoButton:hover,
+    #fullscreenSwitch:hover,
+    #fullscreenSwitchLightMode:hover {
       background-color: rgba(0, 0, 0, 0.7);
     }
     
     #themeSwitch:active,
     #rotationLockSwitch:active,
     #undoButton:active,
-    #redoButton:active {
+    #redoButton:active,
+    #fullscreenSwitch:active,
+    #fullscreenSwitchLightMode:active {
       background-color: rgba(0, 0, 0, 0.9);
     }
     
     #rotationLockSwitch img,
     #themeSwitch ncrs-icon,
     #undoButton img,
-    #redoButton img {
+    #redoButton img,
+    #fullscreenSwitch ncrs-icon,
+    #fullscreenSwitchLightMode ncrs-icon {
       width: 20px;
       height: 20px;
       pointer-events: none;
     }
 
+    /* Left side buttons positioning */
     #themeSwitch {
       top: 8px;
+      left: 8px;
+    }
+    
+    #fullscreenSwitch,
+    #fullscreenSwitchLightMode {
+      top: 48px;
+      left: 8px;
     }
     
     #rotationLockSwitch {
-      top: 48px;
+      top: 88px;
+      left: 8px;
     }
     
+    /* Right side buttons positioning */
     #undoButton {
       top: 8px;
-      left: auto;
       right: 8px;
     }
     
     #redoButton {
       top: 48px;
-      left: auto;
+      right: 8px;
+    }
+    
+    #colorPickerButton {
+      top: 88px;
       right: 8px;
     }
     
@@ -369,6 +413,14 @@ class UI extends LitElement {
       opacity: 0.3;
     }
 
+    ncrs-toolbar {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+    }
+
     :host(.editor-dark) #themeSwitch ncrs-icon.dark,
     :host(.editor-gray) #themeSwitch ncrs-icon.gray,
     :host(.editor-light) #themeSwitch ncrs-icon.light {
@@ -379,18 +431,6 @@ class UI extends LitElement {
     :host(.editor-gray) #themeSwitch ncrs-icon:not(.gray),
     :host(.editor-light) #themeSwitch ncrs-icon:not(.light) {
       display: none;
-    }
-
-    #fullscreenSwitch {
-      all: unset;
-      display: block;
-      cursor: pointer;
-      position: absolute;
-      top: 36px;
-    }
-
-    #rotationLockSwitch {
-      top: 64px;
     }
 
     #fullscreenSwitch ncrs-icon,
@@ -429,16 +469,6 @@ class UI extends LitElement {
 
     :host(.editor-light) #fullscreenSwitch {
       display: none;
-    }
-
-    #fullscreenSwitchLightMode {
-      all: unset;
-      display: block;
-      cursor: pointer;
-      position: absolute;
-      top: 36px;
-      left: 8px;
-      z-index: 10;
     }
 
     #fullscreenSwitchLightMode ncrs-icon {
@@ -697,9 +727,9 @@ class UI extends LitElement {
     return html`
       <div id="main">
         ${!isMobile ? this.config : ''}
-        ${!isMobile ? this.toolbar : ''}
         <div id="editor">
           ${this.editor}
+          ${this.toolbar}
           <button id="themeSwitch" @click=${this._toggleTheme} title="Toggle Theme">
             <ncrs-icon class="dark" icon="moon"></ncrs-icon>
             <ncrs-icon class="gray" icon="circle-half-stroke"></ncrs-icon>
@@ -720,7 +750,6 @@ class UI extends LitElement {
         </div>
         ${isMobile ? html`
           <div id="config-toolbar-container">
-            ${this.toolbar}
             ${this.config}
           </div>
         ` : html`
@@ -730,8 +759,6 @@ class UI extends LitElement {
         `}
         ${this._setupColorCheckModal()}
       </div>
-      ${this.exportModal}
-      ${this.galleryModal}
       <slot name="footer"></slot>
     `;
   }
@@ -839,18 +866,8 @@ class UI extends LitElement {
     `
   }
 
-  _fullscreenToggle() {
-    return html`
-      <button id="fullscreenSwitchLightMode" @click=${this.toggleFullscreen}>
-        <ncrs-icon title="Switch to Fullscreen." icon="fullscreen" color="#00000066" class="minimized"></ncrs-icon>
-        <ncrs-icon title="Minimize." icon="minimize" color="#00000066" class="fullscreen"></ncrs-icon>
-      </button>
-      <button id="fullscreenSwitch" @click=${this.toggleFullscreen}>
-        <ncrs-icon title="Switch to Fullscreen." icon="fullscreen" color="#ffffff44" class="minimized"></ncrs-icon>
-        <ncrs-icon title="Minimize." icon="minimize" color="#ffffff44" class="fullscreen"></ncrs-icon>
-      </button>
-    `
-  }
+  
+
 
 
 
@@ -946,6 +963,14 @@ class UI extends LitElement {
     if (passesColorAccuracyTest()) { return; }
 
     this.shadowRoot.getElementById("color-check-modal").show();
+  }
+
+  _openColorPicker() {
+    // This will open the color picker modal
+    const colorPickerModal = this.shadowRoot.querySelector('ncrs-color-picker-modal');
+    if (colorPickerModal) {
+      colorPickerModal.show();
+    }
   }
 
   _setupEvents() {

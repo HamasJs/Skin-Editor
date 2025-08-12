@@ -54,7 +54,7 @@ class Button extends LitElement {
 
     button:disabled {
       --text-color: var(--text-color-disabled);
-      background-image: linear-gradient(to top, #222427, #2a2d2f);
+      // background-image: linear-gradient(to top, #222427, #2a2d2f);
       box-shadow: #1c1e1f  0px 0px 0px 1px inset, #191a1c 0px 1px 3px, rgba(0, 0, 0, 0.2) 0px 4px 3px;
       cursor: initial
     }
