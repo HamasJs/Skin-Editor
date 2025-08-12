@@ -200,6 +200,7 @@ _showColorModal() {
     // Create picker instance from your file
     this.colorPicker = new ColorPicker(this.ui.editor);
     this.colorPicker.style.width = '320px';
+    this.colorPicker.style.height = '320px';
     this.colorPicker.style.background = '#1A1A1A';
     this.colorPicker.style.borderRadius = '8px';
     this.colorPicker.style.padding = '10px';

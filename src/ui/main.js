@@ -24,6 +24,65 @@ import { GALLERY_URL, SKIN_LOOKUP_URL } from "../constants";
 import { del } from "idb-keyval";
 import passesColorAccuracyTest from "./misc/color_accuracy_test";
 
+// Global methods for React Native WebView integration
+const setupGlobalMethods = (uiInstance) => {
+  // Load a skin from base64 string
+  window.loadSkinFromBase64 = async (base64Data) => {
+    try {
+      // Remove data URL prefix if present
+      const base64 = base64Data.split('base64,')[1] || base64Data;
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'image/png' });
+      const file = new File([blob], 'skin.png', { type: 'image/png' });
+      
+      // Clear existing layers
+      while (uiInstance.editor.layers.length > 0) {
+        uiInstance.editor.removeLayer();
+      }
+      
+      // Add new layer with the imported skin
+      await uiInstance.editor.addLayerFromFile(file);
+      return { success: true };
+    } catch (error) {
+      console.error('Error loading skin from base64:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Export current skin as base64
+  window.exportSkinToBase64 = async () => {
+    try {
+      const canvas = await uiInstance.editor.skinToCanvas();
+      const base64 = canvas.toDataURL('image/png').split(',')[1];
+      return { success: true, data: base64 };
+    } catch (error) {
+      console.error('Error exporting skin to base64:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Listen for skin export requests
+  window.addEventListener('message', async (event) => {
+    if (event.data === 'exportSkin') {
+      try {
+        const result = await window.exportSkinToBase64();
+        if (result.success) {
+          window.ReactNativeWebView?.postMessage(JSON.stringify({
+            type: 'skinExport',
+            skinBase64: result.data
+          }));
+        }
+      } catch (error) {
+        console.error('Error handling export request:', error);
+      }
+    }
+  });
+};
+
 class UI extends LitElement {
 static styles = css`
     :host {
@@ -601,6 +660,9 @@ static styles = css`
 
     this.exportModal = this._setupModal("export-form");
     this.galleryModal = this._setupGalleryModal();
+
+    // Setup global methods for React Native WebView integration
+    setupGlobalMethods(this);
 
     this._setEditorTheme();
     this._setFullscreen();
