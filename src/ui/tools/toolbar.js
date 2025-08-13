@@ -22,26 +22,58 @@ class Toolbar extends LitElement {
       gap: 8px;
     }
 
-    #tools ncrs-tool,
-    #tools ncrs-button {
-      --ncrs-button-bg: #333333;
-      --ncrs-button-bg-hover: #444444;
-      --ncrs-button-bg-active: #555555;
-      --ncrs-button-color: white;
-      --ncrs-button-border-radius: 24px;
-      height: 48px;
-      width: 48px;
-      min-width: 48px;
+ #tools ncrs-tool,
+#tools ncrs-button {
+  --ncrs-button-bg: transparent !important;
+  --ncrs-button-bg-hover: transparent !important;
+  --ncrs-button-bg-active: transparent !important;
+  --ncrs-button-color: white;
+  --ncrs-button-border-radius: 8px;
+  height: 48px;
+  width: 48px;
+  min-width: 48px;
+  transition: transform 0.2s ease;
+  border: none;
+  box-shadow: none;
+  background: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#tools ncrs-tool::part(button),
+#tools ncrs-button::part(button) {
+  background: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+    #tools ncrs-tool:hover,
+    #tools ncrs-button:hover {
+      transform: scale(1.1);
+      background: none !important;
+    }
+
+    #tools ncrs-tool:active,
+    #tools ncrs-button:active {
+      transform: scale(0.95);
+      background: none !important;
     }
 
     #tools ncrs-tool.active,
     #tools ncrs-button.active {
-      --ncrs-button-bg: #555555;
+      background: none !important;
     }
 
     #tools ncrs-icon {
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .ncrs-toggle-row {
@@ -110,26 +142,48 @@ class Toolbar extends LitElement {
       }
     }
 
-    #toggle-classic {
-      --background-before: url(${unsafeCSS(imgSteveAlex)}) 20px 0px;
-      --background-after: url(${unsafeCSS(imgSteveAlex)}) 0px 0px;
-    }
+    // #toggle-classic {
+    //   --background-before: url(${unsafeCSS(imgSteveAlex)}) 20px 0px;
+    //   --background-after: url(${unsafeCSS(imgSteveAlex)}) 0px 0px;
+    // }
 
-    #toggle-slim {
-      --background-before: url(${unsafeCSS(imgSteveAlex)}) 0px 0px;
-      --background-after: url(${unsafeCSS(imgSteveAlex)}) 24px 0px;
-    }
+    // #toggle-slim {
+    //   --background-before: url(${unsafeCSS(imgSteveAlex)}) 0px 0px;
+    //   --background-after: url(${unsafeCSS(imgSteveAlex)}) 24px 0px;
+    // }
 
     ncrs-part-toggle {
       margin-bottom: 1rem;
     }
   `;
 
+  static properties = {
+    _isDarkTheme: { state: true }
+  };
+
   constructor(ui) {
     super();
-
     this.ui = ui;
     this.partToggles = new PartToggle(this.ui.editor);
+    this._isDarkTheme = document.documentElement.classList.contains('editor-dark');
+    this._handleThemeChange = this._handleThemeChange.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener('theme-changed', this._handleThemeChange);
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener('theme-changed', this._handleThemeChange);
+    super.disconnectedCallback();
+  }
+
+  _handleThemeChange(event) {
+    this._isDarkTheme = event.detail?.isDark ?? 
+      document.documentElement.classList.contains('editor-dark');
+    this.requestUpdate();
+    console.log(this._isDarkTheme);
   }
 
   render() {
@@ -156,6 +210,7 @@ class Toolbar extends LitElement {
 
   _renderTools() {
     const editor = this.ui.editor;
+    const isFullscreen = document.fullscreenElement !== null;
 
     return html`
       <div id="tools">
@@ -169,75 +224,138 @@ class Toolbar extends LitElement {
           }
           return newTool;
         })}
-        <!-- Color Picker Button -->
+        <!-- Fullscreen Toggle Button -->
+        <ncrs-button
+          class="fullscreen-btn"
+          @click=${() => this._toggleFullscreen()}
+          title=${isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          style="--ncrs-button-bg: transparent; --ncrs-button-bg-hover: transparent; --ncrs-button-bg-active: transparent;"
+        >
+          <ncrs-icon icon=${this._isDarkTheme ? 'fullscreenDark' : 'fullscreenLight'} style="width: 28px; height: 28px;"></ncrs-icon>
+        </ncrs-button>
+                <!-- Color Picker Button -->
         <ncrs-button 
           class="color-picker-btn" 
           @click=${() => this._showColorModal()}
           title="Open Color Picker"
+          style="--ncrs-button-bg: transparent; --ncrs-button-bg-hover: transparent; --ncrs-button-bg-active: transparent;"
         >
-          <div style="width: 24px; height: 24px; border-radius: 4px; background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);"></div>
+          <div style="width: 28px; height: 28px; border-radius: 4px; background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);"></div>
         </ncrs-button>
       </div>
     `;
   }
 
-_showColorModal() {
-  if (!this.colorModal) {
-    this.colorModal = document.createElement('div');
-    Object.assign(this.colorModal.style, {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    });
-
-    // Create picker instance from your file
-    this.colorPicker = new ColorPicker(this.ui.editor);
-    this.colorPicker.style.width = '320px';
-    this.colorPicker.style.height = '320px';
-    this.colorPicker.style.background = '#1A1A1A';
-    this.colorPicker.style.borderRadius = '8px';
-    this.colorPicker.style.padding = '10px';
-    this.colorPicker.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
-
-    // Prevent dragging
-    this.colorPicker.draggable = false;
-
-    // Append picker to modal
-    this.colorModal.appendChild(this.colorPicker);
-    document.body.appendChild(this.colorModal);
-
-    // Close when clicking outside picker
-    this.colorModal.addEventListener('click', (e) => {
-      if (e.target === this.colorModal) {
+  _showColorModal() {
+    if (!this.colorModal) {
+      // Overlay
+      this.colorModal = document.createElement('div');
+      Object.assign(this.colorModal.style, {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000
+      });
+  
+      // Modal content wrapper
+      const modalContent = document.createElement('div');
+      Object.assign(modalContent.style, {
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        padding: '10px',
+        position: 'relative',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      });
+  
+      // Close button
+      const closeBtn = document.createElement('button');
+      closeBtn.innerHTML = '';
+      Object.assign(closeBtn.style, {
+        position: 'absolute',
+        top: '3px',
+        right: '3px',
+        background: 'transparent',
+        border: 'none',
+        fontSize: '20px',
+        cursor: 'pointer',
+        color: '#333'
+      });
+      closeBtn.addEventListener('click', () => {
         this.colorModal.remove();
         this.colorModal = null;
+      });
+  
+      // Create color picker
+      this.colorPicker = new ColorPicker(this.ui.editor);
+      this.colorPicker.style.width = '320px';
+      this.colorPicker.style.height = '320px';
+      this.colorPicker.style.background = 'transparent'; // white bg handled by modalContent
+      this.colorPicker.style.borderRadius = '4px';
+      this.colorPicker.style.padding = '10px';
+      this.colorPicker.style.boxSizing = 'border-box';
+  
+      // Prevent dragging
+      this.colorPicker.draggable = false;
+  
+      // Append elements
+      modalContent.appendChild(closeBtn);
+      modalContent.appendChild(this.colorPicker);
+      this.colorModal.appendChild(modalContent);
+      document.body.appendChild(this.colorModal);
+  
+      // Click outside closes modal
+      this.colorModal.addEventListener('click', (e) => {
+        if (e.target === this.colorModal) {
+          this.colorModal.remove();
+          this.colorModal = null;
+        }
+      });
+  
+      // Listen for color changes
+      this.colorPicker.addEventListener('color-change', (e) => {
+        const color = e.detail.color;
+        this.ui.editor.toolConfig.set("color", color);
+      });
+    }
+  
+    // Set current color before showing
+    const current = this.ui.editor.toolConfig.get("color");
+    if (current && this.colorPicker?.setColor) {
+      this.colorPicker.setColor(current);
+    }
+  }
+  
+
+  
+  
+  
+
+  async _toggleFullscreen() {
+    try {
+      if (!document.fullscreenElement) {
+        // Enter fullscreen
+        await document.documentElement.requestFullscreen();
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        }
       }
-    });
-
-    // Listen for color changes
-    this.colorPicker.addEventListener('color-change', (e) => {
-      const color = e.detail.color;
-      this.ui.editor.toolConfig.set("color", color);
-    });
+      // Force re-render to update the fullscreen button state
+      this.requestUpdate();
+    } catch (err) {
+      console.error('Error toggling fullscreen:', err);
+    }
   }
-
-  // Set current color before showing
-  const current = this.ui.editor.toolConfig.get("color");
-  if (current && this.colorPicker?.setColor) {
-    this.colorPicker.setColor(current);
-  }
-}
-
-  
-  
-  
 
   _renderToggles() {
     const cfg = this.ui.editor.config;

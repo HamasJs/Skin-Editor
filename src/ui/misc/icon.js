@@ -1,6 +1,17 @@
 import { css, html, LitElement } from "lit";
 const ICON_PATH = "/images/icons/";
 
+// Import theme-specific icons
+import brushDark from "../../../assets/images/icons/brush_dark.png";
+import brushLight from "../../../assets/images/icons/brush_light.png";
+import bucketDark from "../../../assets/images/icons/bucket_dark.png";
+import bucketLight from "../../../assets/images/icons/bucket_light.png";
+import eraserDark from "../../../assets/images/icons/eraser_dark.png";
+import eraserLight from "../../../assets/images/icons/eraser_light.png";
+import fullscreenDark from "../../../assets/images/icons/fullscreen_dark.png";
+import fullscreenLight from "../../../assets/images/icons/fullscren_light.png";
+
+// Import other icons
 import imgIconAdd from "/assets/images/icons/misc/add.svg";
 import imgIconBackfaceCulling from "/assets/images/icons/toggles/backface-culling.svg";
 import imgIconBase from "/assets/images/icons/toggles/base.svg";
@@ -12,8 +23,6 @@ import imgIconBoxHalfChecked from "/assets/images/icons/box-half-checked.svg";
 import imgIconBoxInnerChecked from "/assets/images/icons/box-inner-checked.svg";
 import imgIconBoxOuterChecked from "/assets/images/icons/box-outer-checked.svg";
 import imgIconBoxUnchecked from "/assets/images/icons/box-unchecked.svg";
-import imgIconBrush from "../../../assets/images/icons/brush.png";
-import imgIconBucket from "../../../assets/images/icons/bucket.png";
 import imgIconCamo from "/assets/images/icons/modifiers/camo.svg";
 import imgIconCgol from "/assets/images/icons/cgol.svg";
 import imgIconCircle from "/assets/images/icons/modifiers/circle.svg";
@@ -32,7 +41,6 @@ import imgIconForce2 from "/assets/images/icons/modifiers/force-2.svg";
 import imgIconForce3 from "/assets/images/icons/modifiers/force-3.svg";
 import imgIconForce4 from "/assets/images/icons/modifiers/force-4.svg";
 import imgIconForce5 from "/assets/images/icons/modifiers/force-5.svg";
-import imgIconFullscreen from "../../../assets/images/icons/fullscreen.png";  
 import imgIconJitter from "/assets/images/icons/jitter.svg";
 import imgIconLightMode from "/assets/images/icons/misc/light-mode.svg";
 import imgIconLighten from "/assets/images/icons/modifiers/lighten.svg";
@@ -56,69 +64,71 @@ import imgIconSize3 from "/assets/images/icons/modifiers/size-3.svg";
 import imgIconSquare from "/assets/images/icons/modifiers/square.svg";
 import imgIconUndo from "/assets/images/icons/misc/undo.svg";
 
-
+// Map of all icons with their theme variants
 const ICON_MAP = {
-  "add": imgIconAdd,
+  // Theme-specific icons
+  brushDark:brushDark,
+  brushLight:brushLight,
+  bucketDark:bucketDark,
+  bucketLight:bucketLight,
+  eraserDark:eraserDark,
+  eraserLight:eraserLight,
+  fullscreenLight:fullscreenLight,
+  fullscreenDark:fullscreenDark,
+  
+  
+  // Regular icons (non-theme-specific)
+  add: imgIconAdd,
   "backface-culling": imgIconBackfaceCulling,
-  "base": imgIconBase,
+  base: imgIconBase,
   "base-grid": imgIconBaseGrid,
-  "blend": imgIconBlend,
+  blend: imgIconBlend,
   "blow-up-model": imgIconBlowUpModel,
   "box-checked": imgIconBoxChecked,
   "box-half-checked": imgIconBoxHalfChecked,
   "box-inner-checked": imgIconBoxInnerChecked,
   "box-outer-checked": imgIconBoxOuterChecked,
   "box-unchecked": imgIconBoxUnchecked,
-  "brush": imgIconBrush,
-  "bucket": imgIconBucket,
-  "camo": imgIconCamo,
-  "cgol": imgIconCgol,
-  "circle": imgIconCircle,
-  "clone": imgIconClone,
+  camo: imgIconCamo,
+  cgol: imgIconCgol,
+  circle: imgIconCircle,
+  clone: imgIconClone,
   "replace-color": imgIconReplaceColor,
-  "copy": imgIconCopy,
+  copy: imgIconCopy,
   "dark-mode": imgIconDarkMode,
-  "download": imgIconDownload,
+  download: imgIconDownload,
   "dusk-mode": imgIconDuskMode,
-  "eraser": imgIconEraser,
   "eye-closed": imgIconEyeClosed,
   "eye-open": imgIconEyeOpen,
-  "eyedropper": imgIconEyedropper,
+  eyedropper: imgIconEyedropper,
   "force-1": imgIconForce1,
   "force-2": imgIconForce2,
   "force-3": imgIconForce3,
   "force-4": imgIconForce4,
   "force-5": imgIconForce5,
-  "fullscreen": imgIconFullscreen,
-  "jitter": imgIconJitter,
+  jitter: imgIconJitter,
   "light-mode": imgIconLightMode,
-  "lighten": imgIconLighten,
-  "merge": imgIconMerge,
-  "minimize": imgIconMinimize,
-  "mirror": imgIconMirror,
-  "overlay": imgIconOverlay,
+  lighten: imgIconLighten,
+  merge: imgIconMerge,
+  minimize: imgIconMinimize,
+  mirror: imgIconMirror,
+  overlay: imgIconOverlay,
   "overlay-grid": imgIconOverlayGrid,
-  "paste": imgIconPaste,
-  "redo": imgIconRedo,
-  "remove": imgIconRemove,
-  "saturate": imgIconSaturate,
-  "sculpt": imgIconSculpt,
-  "search": imgIconSearch,
-  "shade": imgIconShade,
+  paste: imgIconPaste,
+  redo: imgIconRedo,
+  remove: imgIconRemove,
+  saturate: imgIconSaturate,
+  search: imgIconSearch,
   "shade-once": imgIconShadeOnce,
-  "shading": imgIconShading,
+  shading: imgIconShading,
   "size-1": imgIconSize1,
   "size-2": imgIconSize2,
   "size-3": imgIconSize3,
-  "square": imgIconSquare,
-  "undo": imgIconUndo,
+  square: imgIconSquare,
+  undo: imgIconUndo,
 }
 
 class Icon extends LitElement {
-  constructor() {
-    super();
-  }
-
   static styles = css`
     :host {
       display: inline-block;
@@ -140,17 +150,54 @@ class Icon extends LitElement {
   `;
 
   static properties = {
-    icon: {},
-    color: {},
+    icon: { type: String },
+    color: { type: String },
+    _isDarkTheme: { state: true }
+  }
+
+  constructor() {
+    super();
+    this._isDarkTheme = document.documentElement.classList.contains('editor-dark');
+    this._handleThemeChange = this._handleThemeChange.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    document.documentElement.addEventListener('theme-changed', this._handleThemeChange);
+  }
+
+  disconnectedCallback() {
+    document.documentElement.removeEventListener('theme-changed', this._handleThemeChange);
+    super.disconnectedCallback();
+  }
+
+  _handleThemeChange() {
+    this._isDarkTheme = document.documentElement.classList.contains('editor-dark');
+    this.requestUpdate();
   }
 
   render() {
-    const iconSrc = ICON_MAP[this.icon];
-    if (!iconSrc) {
+    if (!this.icon) {
+      return document.createElement('div');
+    }
+
+    const iconData = ICON_MAP[this.icon];
+    if (!iconData) {
       console.warn(`Icon '${this.icon}' not found in ICON_MAP`);
       return document.createElement('div');
     }
-    const isSvg = typeof iconSrc === 'string' ? iconSrc.endsWith('.svg') : false;
+
+    // Handle theme-specific icons
+    let iconSrc;
+    if (typeof iconData === 'object' && 'dark' in iconData && 'light' in iconData) {
+      // Theme-specific icon
+      iconSrc = this._isDarkTheme ? iconData.dark : iconData.light;
+    } else {
+      // Regular icon
+      iconSrc = iconData;
+    }
+
+    const isSvg = typeof iconSrc === 'string' && iconSrc.endsWith('.svg');
     
     if (isSvg) {
       // For SVGs, use the mask approach
@@ -185,4 +232,5 @@ class Icon extends LitElement {
 
 customElements.define("ncrs-icon", Icon);
 
+export { ICON_MAP };
 export default Icon;

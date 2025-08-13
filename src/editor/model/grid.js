@@ -10,7 +10,7 @@ function createShaderMaterial(color = DEFAULT_GRID_COLOR, width, height, depth) 
     },
     uniforms: {
       stroke: { value: color },
-      thickness: { value: 0.5 },
+      thickness: { value: 1 },
       segments: { value: [width, height, depth] },
     },
     transparent: true,

@@ -18,6 +18,7 @@ import Modal from "./misc/modal";
 
 import imgGridDark from "/assets/images/grid-editor-dark.png";
 import imgGridGray from "/assets/images/grid-editor-gray.png";
+import backgroundImg from "/assets/images/background.png";
 import imgGridLight from "/assets/images/grid-editor-light.png";
 
 import { GALLERY_URL, SKIN_LOOKUP_URL } from "../constants";
@@ -84,12 +85,13 @@ const setupGlobalMethods = (uiInstance) => {
 };
 
 class UI extends LitElement {
-static styles = css`
+  static styles = css`
     :host {
       width: 100%;
       height: 100%;
       --editor-bg: url(${unsafeCSS(imgGridDark)});
       --ncrs-color-picker-height: 15rem;
+      background-size: cover;
     }
 
     #main {
@@ -97,6 +99,8 @@ static styles = css`
       width: 100%;
       height: 100%;
       position: relative;
+      background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent dark overlay */
+      backdrop-filter: blur(2px); /* Optional: adds a slight blur effect to the background */
     }
 
     /* Desktop layout - default */
@@ -276,15 +280,12 @@ static styles = css`
     }
 
     :host(.editor-dark) {
-      --editor-bg: url(${unsafeCSS(imgGridDark)});
+      --editor-bg: #6AAFCC 
     }
 
-    :host(.editor-gray) {
-      --editor-bg: url(${unsafeCSS(imgGridGray)});
-    }
 
     :host(.editor-light) {
-      --editor-bg: url(${unsafeCSS(imgGridLight)});
+      --editor-bg: #ffffff 
     }
 
     :host(.editor-light) .warning {
@@ -299,11 +300,14 @@ static styles = css`
       --ncrs-color-picker-height: 17rem;
     }
 
-    #editor {
-      background-color: #191919;
-      background-image: var(--editor-bg);
-      position: relative; /* CRITICAL: Make editor a positioning context */
-    }
+#editor {
+  background-color: var(--editor-bg);
+  background-image: url(${unsafeCSS(backgroundImg)});
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed;
+  position: relative;
+}
 
     #layers {
       display: flex;
@@ -327,7 +331,7 @@ static styles = css`
       justify-content: center;
       padding: 0.5rem;
       gap: 0.5rem;
-      background-color: rgb(19, 19, 21);
+      // background-color: rgb(19, 19, 21);
     }
 
     /* Mobile history buttons adjustments */
@@ -371,7 +375,35 @@ static styles = css`
       --icon-color: #aaaaaa;
     }
 
-    /* FIXED: All editor overlay buttons positioned relative to #editor */
+    /* Button container */
+    #buttonContainer {
+      position: absolute;
+      top: 20px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 10;
+      pointer-events: none;
+    }
+    
+    #leftButtons,
+    #centerButtons,
+    #rightButtons {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+    
+    #centerButtons {
+      padding: 8px 12px;
+      border-radius: 24px;
+      backdrop-filter: blur(4px);
+    }
+    
+    /* Button styles */
     #themeSwitch,
     #rotationLockSwitch,
     #undoButton,
@@ -383,70 +415,143 @@ static styles = css`
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      position: absolute; /* Positioned relative to #editor which has position: relative */
-      z-index: 10;
-      width: 32px;
-      height: 32px;
-      background-color: rgba(0, 0, 0, 0.5);
-      border-radius: 4px;
-      transition: background-color 0.2s;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    /* Button hover/active states */
+    #themeSwitch,
+    #rotationLockSwitch {
+    }
+    
+    #undoButton,
+    #redoButton {
+      background-color: transparent;
     }
     
     #themeSwitch:hover,
-    #rotationLockSwitch:hover,
+    #rotationLockSwitch:hover {
+      transform: scale(1.1);
+    }
+    
     #undoButton:hover,
-    #redoButton:hover,
-    #fullscreenSwitch:hover,
-    #fullscreenSwitchLightMode:hover {
-      background-color: rgba(0, 0, 0, 0.7);
+    #redoButton:hover {
+      transform: scale(1.1);
     }
     
     #themeSwitch:active,
     #rotationLockSwitch:active,
     #undoButton:active,
-    #redoButton:active,
-    #fullscreenSwitch:active,
-    #fullscreenSwitchLightMode:active {
-      background-color: rgba(0, 0, 0, 0.9);
+    #redoButton:active {
+      transform: scale(0.95);
     }
     
-    #rotationLockSwitch img,
+    /* Icon styles */
     #themeSwitch ncrs-icon,
+    #rotationLockSwitch img,
     #undoButton img,
-    #redoButton img,
-    #fullscreenSwitch ncrs-icon,
-    #fullscreenSwitchLightMode ncrs-icon {
-      width: 20px;
-      height: 20px;
+    #redoButton img {
+      width: 50px;
+      height: 50px;
       pointer-events: none;
     }
+    
+    /* Theme switch slider */
+    .theme-switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 24px;
+    }
+    
+    .theme-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #4a4a4a;
+      transition: .2s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      z-index: 1;
+    }
+    
+    input:checked + .slider {
+      background-color: #6AAFCC;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+    
+    .slider.round {
+      border-radius: 34px;
+    }
+    
+    .slider.round:before {
+      border-radius: 50%;
+    }
+    
+    .slider .sun,
+    .slider .moon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      z-index: 2;
+    }
+    
+    .slider .sun {
+      color: #FFD700;
+    }
+    
+    .slider .moon {
+      color: #f1f1f1;
+    }
+    
+    /* Theme-specific icon visibility */
+    :host(.editor-dark) .light-icon,
+    :host(.editor-light) .dark-icon,
+    :host([rotationlocked]) .lock-icon,
+    :host(:not([rotationlocked])) .unlock-icon {
+      display: none;
+    }
 
-    /* Left side buttons positioning */
-    #themeSwitch {
-      top: 8px;
-      left: 8px;
+    /* Center buttons */
+    #centerButtons {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
     }
     
-    #fullscreenSwitch,
-    #fullscreenSwitchLightMode {
-      top: 48px;
-      left: 8px;
-    }
-    
-    #rotationLockSwitch {
-      top: 88px;
-      left: 8px;
-    }
-    
-    /* Right side buttons positioning */
+    /* Button spacing */
     #undoButton {
-      top: 8px;
-      right: 8px;
-    }
-    
-    #redoButton {
-      top: 48px;
-      right: 8px;
+      margin-right: 5px;
     }
     
     #colorPickerButton {
@@ -456,8 +561,8 @@ static styles = css`
     
     #undoButton img,
     #redoButton img {
-      width: 20px;
-      height: 20px;
+      width: 30px;
+      height: 30px;
       object-fit: contain;
       opacity: 0.9;
     }
@@ -481,13 +586,11 @@ static styles = css`
     }
 
     :host(.editor-dark) #themeSwitch ncrs-icon.dark,
-    :host(.editor-gray) #themeSwitch ncrs-icon.gray,
     :host(.editor-light) #themeSwitch ncrs-icon.light {
       display: block;
     }
 
     :host(.editor-dark) #themeSwitch ncrs-icon:not(.dark),
-    :host(.editor-gray) #themeSwitch ncrs-icon:not(.gray),
     :host(.editor-light) #themeSwitch ncrs-icon:not(.light) {
       display: none;
     }
@@ -509,8 +612,8 @@ static styles = css`
     }
 
     #rotationLockSwitch img {
-      width: 20px;
-      height: 20px;
+      width: 30px;
+      height: 30px;
       object-fit: contain;
     }
 
@@ -664,7 +767,20 @@ static styles = css`
     // Setup global methods for React Native WebView integration
     setupGlobalMethods(this);
 
-    this._setEditorTheme();
+    // Set default theme to dark if not set
+    const savedTheme = this.persistence.get("theme");
+    if (savedTheme === 'light') {
+      this.classList.add("editor-light");
+      document.documentElement.classList.add("editor-light");
+      document.documentElement.classList.remove("editor-dark");
+    } else {
+      // Default to dark theme
+      this.classList.add("editor-dark");
+      document.documentElement.classList.add("editor-dark");
+      document.documentElement.classList.remove("editor-light");
+      this.persistence.set("theme", "dark");
+    }
+    
     this._setFullscreen();
     this._setupEvents();
     this._setupResponsive();
@@ -788,40 +904,39 @@ static styles = css`
 
     return html`
       <div id="main">
-        ${!isMobile ? this.config : ''}
         <div id="editor">
           ${this.editor}
           ${this.toolbar}
-          <button id="themeSwitch" @click=${this._toggleTheme} title="Toggle Theme">
-            <ncrs-icon class="dark" icon="moon"></ncrs-icon>
-            <ncrs-icon class="gray" icon="circle-half-stroke"></ncrs-icon>
-            <ncrs-icon class="light" icon="sun"></ncrs-icon>
-          </button>
-          <button id="rotationLockSwitch" @click=${this.toggleRotationLock} title="Toggle Rotation Lock">
-            <img class="lock-icon" src="/assets/images/lock.png" alt="Lock">
-            <img class="unlock-icon" src="/assets/images/unlock.png" alt="Unlock">
-          </button>
-          <button id="undoButton" @click=${this._undo} title="Undo" ?disabled=${!this.editor?.history?.canUndo}>
-            <img src="/assets/images/undo.png" alt="Undo">
-          </button>
-          <button id="redoButton" @click=${this._redo} title="Redo" ?disabled=${!this.editor?.history?.canRedo}>
-            <img src="/assets/images/redo.png" alt="Redo">
-          </button>
-          ${this._filtersWarning()}
-          ${this._bgToggle()}
+          <div id="buttonContainer">
+            <div id="leftButtons">
+              <button id="rotationLockSwitch" @click=${this.toggleRotationLock} title="Toggle Rotation Lock">
+                <img class="dark-icon lock-icon" src="/assets/images/lock_dark.png" alt="Lock">
+                <img class="light-icon lock-icon" src="/assets/images/lock_light.png" alt="Lock">
+                <img class="dark-icon unlock-icon" src="/assets/images/unlock_dark.png" alt="Unlock">
+                <img class="light-icon unlock-icon" src="/assets/images/unlock_light.png" alt="Unlock">
+              </button>
+            </div>
+            <div id="centerButtons">
+              <button id="undoButton" @click=${this._undo} title="Undo" ?disabled=${!this.editor?.history?.canUndo}>
+                <img class="dark-icon" src="/assets/images/undo_dark.png" alt="Undo">
+                <img class="light-icon" src="/assets/images/undo_light.png" alt="Undo">
+              </button>
+              <button id="redoButton" @click=${this._redo} title="Redo" ?disabled=${!this.editor?.history?.canRedo}>
+                <img class="dark-icon" src="/assets/images/redo_dark.png" alt="Redo">
+                <img class="light-icon" src="/assets/images/redo_light.png" alt="Redo">
+              </button>
+            </div>
+            <div id="rightButtons">
+              <label class="theme-switch" title="Toggle Theme">
+                <input type="checkbox" @change=${this.toggleEditorBackground}>
+                <span class="slider round">
+                </span>
+              </label>
+            </div>
+          </div>
         </div>
-        ${isMobile ? html`
-          <div id="config-toolbar-container">
-            ${this.config}
-          </div>
-        ` : html`
-          <div id="layers">
-            ${this.layers}
-          </div>
-        `}
         ${this._setupColorCheckModal()}
       </div>
-      <slot name="footer"></slot>
     `;
   }
 
@@ -842,17 +957,23 @@ static styles = css`
   }
 
   toggleEditorBackground() {
-    if (this.classList.contains("editor-gray")) {
-      this.classList.replace("editor-gray", "editor-light");
-      this.persistence.set("theme", "light");
-    } else if (this.classList.contains("editor-light")) {
-      this.classList.replace("editor-light", "editor-dark");
+    if (this.classList.contains("editor-light")) {
+      this.classList.remove("editor-light");
+      this.classList.add("editor-dark");
       this.persistence.set("theme", "dark");
+      document.documentElement.classList.remove("editor-light");
+      document.documentElement.classList.add("editor-dark");
     } else {
-      this.classList.remove("editor-dark", "editor-light");
-      this.classList.add("editor-gray");
-      this.persistence.set("theme", "gray");
+      this.classList.remove("editor-dark");
+      this.classList.add("editor-light");
+      this.persistence.set("theme", "light");
+      document.documentElement.classList.remove("editor-dark");
+      document.documentElement.classList.add("editor-light");
     }
+    // Dispatch a custom event to notify other components about theme change
+    document.dispatchEvent(new CustomEvent('theme-changed', {
+      detail: { isDark: this.classList.contains('editor-dark') }
+    }));
   }
 
   toggleFullscreen() {

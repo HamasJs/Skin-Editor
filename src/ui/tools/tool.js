@@ -1,4 +1,5 @@
 import { css, html, LitElement } from "lit";
+import { ICON_MAP } from "../misc/icon";
 
 class Tool extends LitElement {
   static styles = css`
@@ -18,6 +19,7 @@ class Tool extends LitElement {
   static properties = {
     active: {reflect: true},
     disabled: {reflect: true},
+    _isDarkTheme: {state: true}
   }
 
   constructor(ui, tool) {
@@ -26,19 +28,45 @@ class Tool extends LitElement {
     this.disabled = false;
     this.ui = ui;
     this.tool = tool;
+    this._isDarkTheme = document.documentElement.classList.contains('editor-dark');
+    this._handleThemeChange = this._handleThemeChange.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener('theme-changed', this._handleThemeChange);
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener('theme-changed', this._handleThemeChange);
+    super.disconnectedCallback();
+  }
+
+  _handleThemeChange(event) {
+    this._isDarkTheme = event.detail?.isDark ?? 
+      document.documentElement.classList.contains('editor-dark');
+    this.requestUpdate();
   }
 
   render() {
     this.active = (this.ui.editor.currentTool == this.tool);
 
     const properties = this.tool.properties;
-
-    const icon = properties.icon;
     const title = properties.name + "\n" + properties.description + (this.disabled ? "\n\n(Disabled)" : "");
+    
+    // Get the appropriate icon based on the current theme
+    let iconName = properties.icon;
+    
+    // If icon is an object with dark/light variants, select the appropriate one
+    if (typeof iconName === 'object') {
+      iconName = this._isDarkTheme ? 
+        (iconName.dark || '') : 
+        (iconName.light || iconName.dark || '');
+    }
 
     return html`
       <ncrs-button ?active=${this.active} ?disabled=${this.disabled} title="${title}" @click=${this.select}>
-        <ncrs-icon icon="${icon}" color="var(--text-color)"></ncrs-icon>
+        <ncrs-icon icon="${iconName}" color="var(--text-color)"></ncrs-icon>
       </ncrs-button>
     `
   }

@@ -7,9 +7,9 @@ class BucketTool extends BaseTool {
   constructor(config) {
     super(config, {
       id: "bucket",
-      icon: "bucket",
-      name: "Paint Bucket [G]",
-      description: "Simple tool for filling large closed areas with a specific color.\nUse the left mouse button to fill, and the right mouse button to erase.",
+      icon: { dark: "bucketDark", light: "bucketLight" },
+      name: "Bucket [G]",
+      description: "Fill an area with the selected color.\nLeft click to fill the entire area of the same color.\nRight click to fill only the selected part.",
       providesColor: true, // Whether or not drawing with this tool adds to recent colors.
     });
   }
