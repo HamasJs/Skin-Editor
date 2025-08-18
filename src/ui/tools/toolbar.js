@@ -3,6 +3,7 @@ import Tool from "./tool";
 import PartToggle from "./part_toggles";
 import Modal from "../misc/modal";
 import ColorPicker from "../misc/color_picker";
+import "./part_toggles"; // Import the part toggles component
 
 import imgSteveAlex from "/assets/images/steve_alex.png";
 
@@ -208,6 +209,10 @@ class Toolbar extends LitElement {
     });
   }
 
+  
+
+
+
   _renderTools() {
     const editor = this.ui.editor;
     const isFullscreen = document.fullscreenElement !== null;
@@ -224,16 +229,16 @@ class Toolbar extends LitElement {
           }
           return newTool;
         })}
-        <!-- Fullscreen Toggle Button -->
+        <!-- Remove Layer Button -->
         <ncrs-button
-          class="fullscreen-btn"
-          @click=${() => this._toggleFullscreen()}
-          title=${isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          class="remove-layer-btn"
+          @click=${() => this._removeLayer()}
+          title="Remove Layer"
           style="--ncrs-button-bg: transparent; --ncrs-button-bg-hover: transparent; --ncrs-button-bg-active: transparent;"
         >
           <ncrs-icon icon=${this._isDarkTheme ? 'fullscreenDark' : 'fullscreenLight'} style="width: 28px; height: 28px;"></ncrs-icon>
         </ncrs-button>
-                <!-- Color Picker Button -->
+        <!-- Color Picker Button -->
         <ncrs-button 
           class="color-picker-btn" 
           @click=${() => this._showColorModal()}
@@ -242,6 +247,7 @@ class Toolbar extends LitElement {
         >
           <div style="width: 28px; height: 28px; border-radius: 4px; background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);"></div>
         </ncrs-button>
+        
       </div>
     `;
   }
@@ -339,6 +345,15 @@ class Toolbar extends LitElement {
   
   
 
+  async _removeLayer() {
+    const editor = this.ui.editor;
+    if (editor.layers.layers.length >= 1) {
+      editor.removeLayer();
+    } else {
+      alert("Cannot remove the last layer.");
+    }
+  }
+
   async _toggleFullscreen() {
     try {
       if (!document.fullscreenElement) {
@@ -359,8 +374,35 @@ class Toolbar extends LitElement {
 
   _renderToggles() {
     const cfg = this.ui.editor.config;
-  }
+    const isSlim = cfg.get("variant") == "slim";
+    const baseVisible = cfg.get("baseVisible");
+    const overlayVisible = cfg.get("overlayVisible");
+    const baseGridVisible = cfg.get("baseGridVisible", false);
+    const overlayGridVisible = cfg.get("overlayGridVisible", false);
+    const cullBackFace = cfg.get("cullBackFace", true);
+    const isOuterLayer = cfg.get('showOuterLayer', true);
 
+    return html`
+      <div>
+        <!-- Part Toggles -->
+        <ncrs-part-toggle .editor=${this.ui.editor}></ncrs-part-toggle>
+        
+        <!-- Base and Overlay Toggles -->
+        <div class="ncrs-toggle-row">
+          <ncrs-toggle title="Toggle base" ?toggled=${baseVisible} @toggle=${this._toggleBase}>
+            <ncrs-icon slot="off" icon="base" color="red"></ncrs-icon>
+            <ncrs-icon slot="on" icon="base" color="black"></ncrs-icon>
+          </ncrs-toggle>
+          <ncrs-toggle title="Toggle overlay" ?toggled=${overlayVisible} @toggle=${this._toggleOverlay}>
+            <ncrs-icon slot="off" icon="overlay" color="red"></ncrs-icon>
+            <ncrs-icon slot="on" icon="overlay" color="black"></ncrs-icon>
+          </ncrs-toggle>
+        </div>
+      
+        
+      </div>
+    `;
+  }
   _toggleSkinModel(event) {
     const model = event.detail ? "slim" : "classic";
     this.ui.editor.setVariant(model);
@@ -384,6 +426,19 @@ class Toolbar extends LitElement {
 
   _toggleBackfaceCulling(event) {
     this.ui.editor.config.set("cullBackFace", event.detail);
+  }
+
+  _toggleLayerVisibility() {
+    const current = this.ui.editor.config.get('showOuterLayer', true);
+    const newValue = !current;
+    this.ui.editor.config.set('showOuterLayer', newValue);
+    
+    // Call the appropriate editor method to update the view
+    if (newValue) {
+      this.ui.editor.showOuterLayer();
+    } else {
+      this.ui.editor.showInnerLayer();
+    }
   }
 }
 

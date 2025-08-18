@@ -111,6 +111,20 @@ class PartToggle extends LitElement {
   render() {
     const toggled = this.editor.config.get("partVisibility");
 
+    return html`
+      <div id="parts">
+        <ncrs-toggle id="toggle-head" title="Toggle head.\nShift + click to toggle only head" ?toggled=${toggled.head} @toggle=${this._toggleHeadPart}></ncrs-toggle>
+        <div>
+          <ncrs-toggle id="toggle-rarm" title="Toggle right arm.\nShift + click to toggle only right arm" ?toggled=${toggled.arm_right} @toggle=${this._toggleRArmPart}></ncrs-toggle>
+          <ncrs-toggle id="toggle-torso" title="Toggle torso.\nShift + click to toggle only torso" ?toggled=${toggled.torso} @toggle=${this._toggleTorsoPart}></ncrs-toggle>
+          <ncrs-toggle id="toggle-larm" title="Toggle left arm.\nShift + click to toggle only left arm" ?toggled=${toggled.arm_left} @toggle=${this._toggleLArmPart}></ncrs-toggle>
+        </div>
+        <div>
+          <ncrs-toggle id="toggle-rleg" title="Toggle right leg.\nShift + click to toggle only right leg" ?toggled=${toggled.leg_right} @toggle=${this._toggleRLegPart}></ncrs-toggle>
+          <ncrs-toggle id="toggle-lleg" title="Toggle left leg.\nShift + click to toggle only left leg" ?toggled=${toggled.leg_left} @toggle=${this._toggleLLegPart}></ncrs-toggle>
+        </div>
+      </div>
+    `
   }
 
   _toggleHeadPart(event) {

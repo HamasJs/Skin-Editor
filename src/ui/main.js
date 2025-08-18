@@ -306,7 +306,7 @@ class UI extends LitElement {
 
 #editor {
   background-color: var(--editor-bg);
-  background-image: url(${unsafeCSS(backgroundImg)});
+  background-image: url("../../assets/images/background.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-attachment: fixed;

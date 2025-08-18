@@ -9,7 +9,7 @@ import bucketLight from "../../../assets/images/icons/bucket_light.png";
 import eraserDark from "../../../assets/images/icons/eraser_dark.png";
 import eraserLight from "../../../assets/images/icons/eraser_light.png";
 import fullscreenDark from "../../../assets/images/icons/fullscreen_dark.png";
-import fullscreenLight from "../../../assets/images/icons/fullscren_light.png";
+import fullscreenLight from "../../../assets/images/icons/fullscreen_light.png";
 
 // Import other icons
 import imgIconAdd from "/assets/images/icons/misc/add.svg";
