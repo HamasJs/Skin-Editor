@@ -58,18 +58,17 @@ const setupGlobalMethods = (uiInstance) => {
     }
   };
 
-
-  // Set background image directly
-  window.setBackgroundImage = (imagePath) => {
+  // Set background image from base64 data - simple version
+  window.setBackgroundImage = (base64Data) => {
     try {
-      if (!imagePath) {
+      if (!base64Data) {
         uiInstance.backgroundImage = '';
-        uiInstance.requestUpdate();
-        return { success: true };
+      } else {
+        // Ensure the data URL has the proper prefix
+        uiInstance.backgroundImage = base64Data.startsWith('data:image/') ? 
+          base64Data : 
+          `data:image/png;base64,${base64Data}`;
       }
-      
-      // Set the background image path directly
-      uiInstance.backgroundImage = imagePath;
       uiInstance.requestUpdate();
       return { success: true };
     } catch (error) {
@@ -364,6 +363,7 @@ class UI extends LitElement {
       background-position: center;
       background-repeat: no-repeat;
       z-index: -1;
+      pointer-events: none;
     }
 
     #layers {
@@ -981,8 +981,10 @@ class UI extends LitElement {
 
   render() {
     const isMobile = window.innerWidth <= 768;
+    
+    // Simple background style - let CSS handle the rest
     const backgroundStyle = this.backgroundImage ? 
-      `background-image: url('${this.backgroundImage}'); background-size: cover; background-position: center;` : '';
+      `background-image: url('${this.backgroundImage}');` : '';
 
     return html`
       <div id="main">
