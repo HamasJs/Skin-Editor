@@ -194,22 +194,74 @@ class Controls {
   }
 
   _setupEvents(parent) {
+    // Mouse events
     parent.addEventListener("mousedown", this.onMouseDown.bind(this));
     parent.addEventListener("mousemove", this.onMouseMove.bind(this));
     parent.addEventListener("mouseup", this.onMouseUp.bind(this));
+    parent.addEventListener("mouseleave", this.onMouseUp.bind(this));
+
+    // Touch events
+    parent.addEventListener("touchstart", this.onTouchStart.bind(this), { passive: false });
+    parent.addEventListener("touchmove", this.onTouchMove.bind(this), { passive: false });
+    parent.addEventListener("touchend", this.onTouchEnd.bind(this));
+    parent.addEventListener("touchcancel", this.onTouchEnd.bind(this));
 
     parent.addEventListener("contextmenu", event => {
       if (!this.targetingModel) { return; }
-
       event.preventDefault();
-    })
+    });
 
     document.addEventListener("keydown", this.onKeyDown.bind(this));
     document.addEventListener("keyup", this.onKeyUp.bind(this));
 
     document.addEventListener("mousemove", event => {
       this._checkEyedropper(event);
-    })
+    });
+  }
+
+  onTouchStart(event) {
+    // Prevent scrolling when interacting with the model
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+    
+    const touch = event.touches[0];
+    const rect = this.parent.renderer.canvas().getBoundingClientRect();
+    
+    // Create a synthetic mouse event
+    const mouseEvent = {
+      offsetX: touch.clientX - rect.left,
+      offsetY: touch.clientY - rect.top,
+      buttons: 1, // Left mouse button
+      preventDefault: () => {}
+    };
+    
+    this.onMouseDown(mouseEvent);
+  }
+
+  onTouchMove(event) {
+    if (!this.pointerDown) return;
+    
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+    
+    const touch = event.touches[0];
+    const rect = this.parent.renderer.canvas().getBoundingClientRect();
+    
+    // Create a synthetic mouse event
+    const mouseEvent = {
+      offsetX: touch.clientX - rect.left,
+      offsetY: touch.clientY - rect.top,
+      buttons: this.pointerDown ? 1 : 0,
+      preventDefault: () => {}
+    };
+    
+    this.onMouseMove(mouseEvent);
+  }
+
+  onTouchEnd() {
+    this.onMouseUp();
   }
 }
 
