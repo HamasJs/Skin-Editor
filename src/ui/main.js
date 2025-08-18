@@ -58,6 +58,26 @@ const setupGlobalMethods = (uiInstance) => {
     }
   };
 
+
+  // Set background image directly
+  window.setBackgroundImage = (imagePath) => {
+    try {
+      if (!imagePath) {
+        uiInstance.backgroundImage = '';
+        uiInstance.requestUpdate();
+        return { success: true };
+      }
+      
+      // Set the background image path directly
+      uiInstance.backgroundImage = imagePath;
+      uiInstance.requestUpdate();
+      return { success: true };
+    } catch (error) {
+      console.error('Error setting background image:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   // Export current skin as base64
   window.exportSkinToBase64 = async () => {
     try {
@@ -96,6 +116,23 @@ class UI extends LitElement {
       --editor-bg: url(${unsafeCSS(imgGridDark)});
       --ncrs-color-picker-height: 15rem;
       background-size: cover;
+    }
+    
+    #editor {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    
+    #editor-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      z-index: -1;
     }
 
     #main {
@@ -304,15 +341,30 @@ class UI extends LitElement {
       --ncrs-color-picker-height: 17rem;
     }
 
-#editor {
-  background-color: var(--editor-bg);
-  background-image: url(${unsafeCSS(backgroundImg)});
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-attachment: fixed;
-  background-size: cover;
-  position: relative;
-}
+    #editor {
+      background-color: var(--editor-bg);
+      background-image: url(${unsafeCSS(backgroundImg)});
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;
+      background-size: cover;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    #editor-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: -1;
+    }
 
     #layers {
       display: flex;
@@ -500,12 +552,34 @@ class UI extends LitElement {
       width: 18px;
       left: 3px;
       bottom: 3px;
-      background-color: white;
+      background-color: #6AAFCC;
       transition: .2s;
       z-index: 1;
     }
     
-    input:checked + .slider {
+    /* Dark theme (default) */
+    :host(.editor-dark) .slider {
+      background-color: #4a4a4a;
+    }
+    
+    :host(.editor-dark) input:checked + .slider {
+      background-color: white;
+    }
+    
+    :host(.editor-dark) .slider:before {
+      background-color: #6AAFCC;
+    }
+    
+    /* Light theme */
+    :host(.editor-light) .slider {
+      background-color: #e0e0e0;
+    }
+    
+    :host(.editor-light) input:checked + .slider {
+      background-color: white;
+    }
+    
+    :host(.editor-light) .slider:before {
       background-color: #6AAFCC;
     }
     
@@ -727,6 +801,7 @@ class UI extends LitElement {
     src: {type: String},
     _warning: {type: String, state: true},
     rotationLocked: {type: Boolean, state: true},
+    backgroundImage: {type: String, state: true}
   }
 
   // All keybind definitions, ^ = ctrl, + = shift, ! = alt
@@ -906,10 +981,13 @@ class UI extends LitElement {
 
   render() {
     const isMobile = window.innerWidth <= 768;
+    const backgroundStyle = this.backgroundImage ? 
+      `background-image: url('${this.backgroundImage}'); background-size: cover; background-position: center;` : '';
 
     return html`
       <div id="main">
         <div id="editor">
+          <div id="editor-background" style="${unsafeCSS(backgroundStyle)}"></div>
           ${this.editor}
           ${this.toolbar}
           <div id="buttonContainer">
@@ -931,7 +1009,11 @@ class UI extends LitElement {
             </div>
             <div id="rightButtons">
               <label class="theme-switch" title="Toggle Theme">
-                <input type="checkbox" @change=${this.toggleEditorBackground}>
+                <input 
+                  type="checkbox" 
+                  @change=${this.toggleEditorBackground}
+                  ?checked=${!this.classList.contains("editor-light")}
+                >
                 <span class="slider round">
                 </span>
               </label>
