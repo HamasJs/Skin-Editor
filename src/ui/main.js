@@ -17,9 +17,13 @@ import { getFocusedElement, isKeybindIgnored } from "../helpers";
 import Modal from "./misc/modal";
 
 import imgGridDark from "/assets/images/grid-editor-dark.png";
-import imgGridGray from "/assets/images/grid-editor-gray.png";
-import backgroundImg from "/assets/images/background.png";
-import imgGridLight from "/assets/images/grid-editor-light.png";
+import backgroundImg from "../../assets/images/background.png";
+import imgUndoLight from "../../assets/images/undo_light.png";
+import imgRedoLight from "../../assets/images/redo_light.png";
+import imgUndoDark from "../../assets/images/undo_dark.png";
+import imgRedoDark from "../../assets/images/redo_dark.png";
+import imgLockDark from "../../assets/images/lock_dark.png";
+import imgLockLight from "../../assets/images/lock_light.png";
 
 import { GALLERY_URL, SKIN_LOOKUP_URL } from "../constants";
 import { del } from "idb-keyval";
@@ -910,20 +914,18 @@ class UI extends LitElement {
           <div id="buttonContainer">
             <div id="leftButtons">
               <button id="rotationLockSwitch" @click=${this.toggleRotationLock} title="Toggle Rotation Lock">
-                <img class="dark-icon lock-icon" src="/assets/images/lock_dark.png" alt="Lock">
-                <img class="light-icon lock-icon" src="/assets/images/lock_light.png" alt="Lock">
-                <img class="dark-icon unlock-icon" src="/assets/images/unlock_dark.png" alt="Unlock">
-                <img class="light-icon unlock-icon" src="/assets/images/unlock_light.png" alt="Unlock">
+                <img class="dark-icon lock-icon" src=${imgLockDark} alt="Lock">
+                <img class="light-icon lock-icon" src=${imgLockLight} alt="Lock">
               </button>
             </div>
             <div id="centerButtons">
               <button id="undoButton" @click=${this._undo} title="Undo" ?disabled=${!this.editor?.history?.canUndo}>
-                <img class="dark-icon" src="/assets/images/undo_dark.png" alt="Undo">
-                <img class="light-icon" src="/assets/images/undo_light.png" alt="Undo">
+                <img class="dark-icon" src=${imgUndoDark} alt="Undo">
+                <img class="light-icon" src=${imgUndoLight} alt="Undo">
               </button>
               <button id="redoButton" @click=${this._redo} title="Redo" ?disabled=${!this.editor?.history?.canRedo}>
-                <img class="dark-icon" src="/assets/images/redo_dark.png" alt="Redo">
-                <img class="light-icon" src="/assets/images/redo_light.png" alt="Redo">
+                <img class="dark-icon" src=${imgRedoDark} alt="Redo">
+                <img class="light-icon" src=${imgRedoLight} alt="Redo">
               </button>
             </div>
             <div id="rightButtons">
