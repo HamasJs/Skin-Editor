@@ -1,6 +1,42 @@
-import { css, html, LitElement } from "lit";
+import { css, html, LitElement, unsafeCSS } from "lit";
 
 class Button extends LitElement {
+  static properties = {
+    _isDarkTheme: { state: true }
+  };
+
+  constructor() {
+    super();
+    this._isDarkTheme = document.documentElement.classList.contains('editor-dark');
+    this._handleThemeChange = this._handleThemeChange.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener('theme-changed', this._handleThemeChange);
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener('theme-changed', this._handleThemeChange);
+    super.disconnectedCallback();
+  }
+
+  _handleThemeChange(event) {
+    this._isDarkTheme = event.detail?.isDark ?? !this._isDarkTheme;
+    this.style.setProperty('--active-button-bg', 
+      this._isDarkTheme ? 'rgba(255, 255, 255, 0.1)' : 'rgba(106, 175, 204, 0.2)'
+    );
+  }
+
+  firstUpdated() {
+    this._updateThemeStyles();
+  }
+
+  _updateThemeStyles() {
+    this.style.setProperty('--active-button-bg', 
+      this._isDarkTheme ? 'rgba(255, 255, 255, 0.4)' : 'rgba(106, 175, 204, 0.4)'
+    );
+  }
   static styles = css`
     :host {
       --text-color: white;
@@ -8,6 +44,7 @@ class Button extends LitElement {
       --text-color-pressed: #aaa;
       --text-color-active: #55b2ff;
       --text-color-disabled: #565758;
+      --bg-color: rgba(255, 255, 255, 0.1);
       display: block;
     }
 
@@ -41,10 +78,11 @@ class Button extends LitElement {
 
     :host([active]) button {
       --text-color: var(--text-color-active);
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: var(--active-button-bg);
       margin-top: 0.125rem;
       margin-bottom: 0.25rem;
     }
+
 
     button:focus-visible {
       outline: 1px white solid;
