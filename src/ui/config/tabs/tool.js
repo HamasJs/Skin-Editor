@@ -74,7 +74,7 @@ class ToolTab extends Tab {
 
       #palettes::part(button selected),
       #palettes::part(button):active {
-        border-color: #313436;
+        border-color:rgb(0, 147, 245);
       }
 
       #palettes::part(button selected) {

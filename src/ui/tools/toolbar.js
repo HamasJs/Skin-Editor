@@ -106,6 +106,7 @@ class Toolbar extends LitElement {
       display: none;
     }
 
+
     #toggle-variant {
       display: block;
       margin-bottom: 0.75rem;
@@ -229,15 +230,6 @@ class Toolbar extends LitElement {
           }
           return newTool;
         })}
-        <!-- Remove Layer Button -->
-        <ncrs-button
-          class="remove-layer-btn"
-          @click=${() => this._removeLayer()}
-          title="Remove Layer"
-          style="--ncrs-button-bg: transparent; --ncrs-button-bg-hover: transparent; --ncrs-button-bg-active: transparent;"
-        >
-          <ncrs-icon icon=${this._isDarkTheme ? 'fullscreenDark' : 'fullscreenLight'} style="width: 28px; height: 28px;"></ncrs-icon>
-        </ncrs-button>
         <!-- Color Picker Button -->
         <ncrs-button 
           class="color-picker-btn" 
@@ -373,33 +365,9 @@ class Toolbar extends LitElement {
   }
 
   _renderToggles() {
-    const cfg = this.ui.editor.config;
-    const isSlim = cfg.get("variant") == "slim";
-    const baseVisible = cfg.get("baseVisible");
-    const overlayVisible = cfg.get("overlayVisible");
-    const baseGridVisible = cfg.get("baseGridVisible", false);
-    const overlayGridVisible = cfg.get("overlayGridVisible", false);
-    const cullBackFace = cfg.get("cullBackFace", true);
-    const isOuterLayer = cfg.get('showOuterLayer', true);
-
     return html`
       <div>
-        <!-- Part Toggles -->
         <ncrs-part-toggle .editor=${this.ui.editor}></ncrs-part-toggle>
-        
-        <!-- Base and Overlay Toggles -->
-        <div class="ncrs-toggle-row">
-          <ncrs-toggle title="Toggle base" ?toggled=${baseVisible} @toggle=${this._toggleBase}>
-            <ncrs-icon slot="off" icon="base" color="grey"></ncrs-icon>
-            <ncrs-icon slot="on" icon="base" color="black"></ncrs-icon>
-          </ncrs-toggle>
-          <ncrs-toggle title="Toggle overlay" ?toggled=${overlayVisible} @toggle=${this._toggleOverlay}>
-            <ncrs-icon slot="off" icon="overlay" color="grey"></ncrs-icon>
-            <ncrs-icon slot="on" icon="overlay" color="black"></ncrs-icon>
-          </ncrs-toggle>
-        </div>
-      
-        
       </div>
     `;
   }

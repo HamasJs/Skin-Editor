@@ -24,6 +24,8 @@ import imgUndoDark from "../../assets/images/undo_dark.png";
 import imgRedoDark from "../../assets/images/redo_dark.png";
 import imgLockDark from "../../assets/images/lock_dark.png";
 import imgLockLight from "../../assets/images/lock_light.png";
+import imgUnlockDark from "../../assets/images/unlock_dark.png";
+import imgUnlockLight from "../../assets/images/unlock_light.png";
 
 import { GALLERY_URL, SKIN_LOOKUP_URL } from "../constants";
 import { del } from "idb-keyval";
@@ -747,6 +749,141 @@ class UI extends LitElement {
       max-width: 32rem;
     }
 
+    /* Layer toggles container */
+    .layer-toggles {
+      position: fixed;
+      right: 20px;
+      top: 30%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 10000; /* High z-index to ensure it's clickable */
+      pointer-events: auto;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      padding: 4px 0;
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+    }
+
+    .checkbox-row:hover {
+      opacity: 0.9;
+    }
+
+    /* Light theme */
+    :host(.editor-light) .checkbox-row {
+      color: #6AAFCC;
+    }
+
+    :host(.editor-light) .checkbox-row input[type="checkbox"] {
+      border-color: #6AAFCC;
+      background-color: white;
+    }
+
+    :host(.editor-light) .checkbox-row input[type="checkbox"]:checked {
+      background-color: #6AAFCC;
+      border-color: #6AAFCC;
+    }
+
+    :host(.editor-light) .checkbox-row:disabled {
+      color: #999;
+      opacity: 0.7;
+    }
+
+    /* Dark theme */
+    :host(.editor-dark) .checkbox-row {
+      color: #6AAFCC;
+    }
+
+    :host(.editor-dark) .checkbox-row input[type="checkbox"] {
+      border-color: white;
+      background-color: #1a1a1a;
+    }
+
+    :host(.editor-dark) .checkbox-row input[type="checkbox"]:checked {
+      background-color: white;
+      border-color: white;
+    }
+
+    :host(.editor-dark) .checkbox-row:disabled {
+      color: #666;
+      opacity: 0.7;
+    }
+
+.checkbox-row input[type="checkbox"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid;
+  border-radius: 3px;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-row input[type="checkbox"]::after {
+  content: '✓';
+  position: absolute;
+  font-size: 10px;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+  transform: translateY(-1px);
+}
+
+/* Light theme */
+:host(.editor-light) .checkbox-row {
+  color: #6AAFCC;
+}
+
+:host(.editor-light) .checkbox-row input[type="checkbox"] {
+  border-color: #6AAFCC;
+  background-color: white;
+}
+
+:host(.editor-light) .checkbox-row input[type="checkbox"]:checked {
+  background-color: #6AAFCC;
+  border-color: #6AAFCC;
+}
+
+:host(.editor-light) .checkbox-row input[type="checkbox"]:checked::after {
+  color: white;
+  opacity: 1;
+}
+
+/* Dark theme */
+:host(.editor-dark) .checkbox-row {
+  color: white;
+}
+
+:host(.editor-dark) .checkbox-row input[type="checkbox"] {
+  border-color: white;
+  background-color: transparent;
+}
+
+:host(.editor-dark) .checkbox-row input[type="checkbox"]:checked {
+  background-color: white;
+  border-color: white;
+}
+
+:host(.editor-dark) .checkbox-row input[type="checkbox"]:checked::after {
+  color: #6AAFCC;
+  opacity: 1;
+}
+
+
     /* Mobile modal adjustments */
     @media (max-width: 768px) {
       #color-check {
@@ -994,10 +1131,24 @@ class UI extends LitElement {
           ${this.toolbar}
           <div id="buttonContainer">
             <div id="leftButtons">
-              <button id="rotationLockSwitch" @click=${this.toggleRotationLock} title="Toggle Rotation Lock">
-                <img class="dark-icon lock-icon" src=${imgLockDark} alt="Lock">
-                <img class="light-icon lock-icon" src=${imgLockLight} alt="Lock">
-              </button>
+<button
+  id="rotationLockSwitch"
+  @click=${this.toggleRotationLock}
+  title="Toggle Rotation Lock"
+>
+  ${!this.rotationLocked
+    ? html`
+        <!-- Locked: show lock icons -->
+        <img class="dark-icon lock-icon" src=${imgLockDark} alt="Lock">
+        <img class="light-icon lock-icon" src=${imgLockLight} alt="Lock">
+      `
+    : html`
+        <!-- Unlocked: show unlock icons -->
+        <img class="dark-icon lock-icon" src=${imgUnlockDark} alt="Unlock">
+        <img class="light-icon lock-icon" src=${imgUnlockLight} alt="Unlock">
+      `}
+</button>
+
             </div>
             <div id="centerButtons">
               <button id="undoButton" @click=${this._undo} title="Undo" ?disabled=${!this.editor?.history?.canUndo}>
@@ -1009,17 +1160,38 @@ class UI extends LitElement {
                 <img class="light-icon" src=${imgRedoLight} alt="Redo">
               </button>
             </div>
-            <div id="rightButtons">
-              <label class="theme-switch" title="Toggle Theme">
-                <input 
-                  type="checkbox" 
-                  @change=${this.toggleEditorBackground}
-                  ?checked=${!this.classList.contains("editor-light")}
-                >
-                <span class="slider round">
-                </span>
-              </label>
-            </div>
+<div id="rightButtons">
+  <label class="theme-switch" title="Toggle Theme">
+    <input 
+      type="checkbox" 
+      @change=${this.toggleEditorBackground}
+      ?checked=${!this.classList.contains("editor-light")}
+    >
+    <span class="slider round"></span>
+  </label>
+</div>
+
+<!-- Independent checkboxes container -->
+<div class="layer-toggles">
+  <div class="checkbox-row">
+    <input 
+      type="checkbox" 
+      id="base-toggle"
+      .checked=${this.editor.config.get("baseVisible")} 
+      @change=${(e) => this.editor.setBaseVisible(e.target.checked)}
+    >
+    <label for="base-toggle">Inner</label>
+  </div>
+  <div class="checkbox-row">
+    <input 
+      type="checkbox" 
+      id="overlay-toggle"
+      .checked=${this.editor.config.get("overlayVisible")} 
+      @change=${(e) => this.editor.setOverlayVisible(e.target.checked)}
+    >
+    <label for="overlay-toggle">Outer</label>
+  </div>
+</div>
           </div>
         </div>
         ${this._setupColorCheckModal()}
