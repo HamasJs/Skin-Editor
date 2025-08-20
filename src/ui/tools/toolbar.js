@@ -3,6 +3,8 @@ import Tool from "./tool";
 import PartToggle from "./part_toggles";
 import Modal from "../misc/modal";
 import ColorPicker from "../misc/color_picker";
+import Color from "color";
+import { clamp } from "../../helpers";
 import "./part_toggles"; // Import the part toggles component
 
 import imgSteveAlex from "/assets/images/steve_alex.png";
@@ -169,6 +171,8 @@ class Toolbar extends LitElement {
     this.partToggles = new PartToggle(this.ui.editor);
     this._isDarkTheme = document.documentElement.classList.contains('editor-dark');
     this._handleThemeChange = this._handleThemeChange.bind(this);
+    this.recentColors = this._loadRecentColors();
+    this._setupColorEvents();
   }
 
   connectedCallback() {
@@ -186,6 +190,98 @@ class Toolbar extends LitElement {
       document.documentElement.classList.contains('editor-dark');
     this.requestUpdate();
     console.log(this._isDarkTheme);
+  }
+
+  _loadRecentColors() {
+    return this.ui.persistence.get("recentPalette", []);
+  }
+
+  _saveRecentColors() {
+    this.ui.persistence.set("recentPalette", this.recentColors);
+  }
+
+  _addRecentColor(color) {
+    const colorString = color.hex().toLowerCase();
+    
+    // Remove if already exists
+    const existingIndex = this.recentColors.indexOf(colorString);
+    if (existingIndex > -1) {
+      this.recentColors.splice(existingIndex, 1);
+    }
+    
+    // Add to beginning
+    this.recentColors.unshift(colorString);
+    
+    // Limit to 10 colors
+    if (this.recentColors.length > 10) {
+      this.recentColors = this.recentColors.slice(0, 10);
+    }
+    
+    this._saveRecentColors();
+  }
+
+  _setupColorEvents() {
+    this.ui.editor.addEventListener("tool-up", () => {
+      if (!this.ui.editor.currentTool.properties.providesColor) { return; }
+      
+      const color = this.ui.editor.toolConfig.get("color");
+      this._addRecentColor(color);
+    });
+  }
+
+  _createRecentColorsGrid() {
+    const grid = document.createElement('div');
+    Object.assign(grid.style, {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(10, 1fr)',
+      gap: '6px',
+      marginTop: '10px',
+      padding: '4px'
+    });
+
+    this.recentColors.forEach(colorString => {
+      const colorButton = document.createElement('button');
+      const color = new Color(colorString);
+      
+      Object.assign(colorButton.style, {
+        width: '20px',
+        height: '20px',
+        border: 'none',
+        borderRadius: '3px',
+        backgroundColor: colorString,
+        cursor: 'pointer',
+        boxShadow: 'rgba(0, 0, 0, 0.25) 0px 1px 3px inset, rgba(0, 0, 0, 0.25) 0px -1px 0px inset',
+        position: 'relative'
+      });
+
+      colorButton.title = `Use color ${colorString}`;
+
+      // Check if this is the current color
+      const currentColor = this.ui.editor.toolConfig.get("color");
+      if (currentColor && color.rgb().string() === currentColor.rgb().string()) {
+        const indicator = document.createElement('div');
+        Object.assign(indicator.style, {
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          border: color.isLight() ? '1px solid black' : '1px solid white'
+        });
+        colorButton.appendChild(indicator);
+      }
+
+      colorButton.addEventListener('click', () => {
+        this.colorPicker.setColor(color);
+        this.ui.editor.toolConfig.set("color", color);
+      });
+
+      grid.appendChild(colorButton);
+    });
+
+    return grid;
   }
 
   render() {
@@ -209,10 +305,6 @@ class Toolbar extends LitElement {
       this.select(event.detail.tool);
     });
   }
-
-  
-
-
 
   _renderTools() {
     const editor = this.ui.editor;
@@ -266,26 +358,29 @@ class Toolbar extends LitElement {
       Object.assign(modalContent.style, {
         backgroundColor: 'white',
         borderRadius: '8px',
-        padding: '10px',
+        padding: '20px',
         position: 'relative',
         boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center'
+        alignItems: 'center',
+        maxWidth: '90vw',
+        maxHeight: '90vh'
       });
   
       // Close button
       const closeBtn = document.createElement('button');
-      closeBtn.innerHTML = '';
+      closeBtn.innerHTML = '×';
       Object.assign(closeBtn.style, {
         position: 'absolute',
-        top: '3px',
-        right: '3px',
+        top: '8px',
+        right: '12px',
         background: 'transparent',
         border: 'none',
-        fontSize: '20px',
+        fontSize: '24px',
         cursor: 'pointer',
-        color: '#333'
+        color: '#666',
+        lineHeight: '1'
       });
       closeBtn.addEventListener('click', () => {
         this.colorModal.remove();
@@ -296,17 +391,54 @@ class Toolbar extends LitElement {
       this.colorPicker = new ColorPicker(this.ui.editor);
       this.colorPicker.style.width = '320px';
       this.colorPicker.style.height = '320px';
-      this.colorPicker.style.background = 'transparent'; // white bg handled by modalContent
+      this.colorPicker.style.background = 'transparent';
       this.colorPicker.style.borderRadius = '4px';
       this.colorPicker.style.padding = '10px';
       this.colorPicker.style.boxSizing = 'border-box';
-  
-      // Prevent dragging
       this.colorPicker.draggable = false;
+
+      // Recent colors section
+      const recentColorsSection = document.createElement('div');
+      Object.assign(recentColorsSection.style, {
+        width: '100%',
+        marginTop: '15px'
+      });
+
+      // Recent colors title
+      const recentTitle = document.createElement('h4');
+      recentTitle.textContent = 'Recent Colors';
+      Object.assign(recentTitle.style, {
+        margin: '0 0 8px 0',
+        color: '#333',
+        fontSize: '14px',
+        fontWeight: '600'
+      });
+
+      // Create recent colors grid
+      const recentColorsGrid = this._createRecentColorsGrid();
+
+      // Add empty state if no recent colors
+      if (this.recentColors.length === 0) {
+        const emptyState = document.createElement('p');
+        emptyState.textContent = 'No recent colors. Colors you use will appear here.';
+        Object.assign(emptyState.style, {
+          color: '#999',
+          fontSize: '12px',
+          margin: '0',
+          textAlign: 'center',
+          padding: '20px'
+        });
+        recentColorsSection.appendChild(recentTitle);
+        recentColorsSection.appendChild(emptyState);
+      } else {
+        recentColorsSection.appendChild(recentTitle);
+        recentColorsSection.appendChild(recentColorsGrid);
+      }
   
       // Append elements
       modalContent.appendChild(closeBtn);
       modalContent.appendChild(this.colorPicker);
+      modalContent.appendChild(recentColorsSection);
       this.colorModal.appendChild(modalContent);
       document.body.appendChild(this.colorModal);
   
@@ -322,6 +454,12 @@ class Toolbar extends LitElement {
       this.colorPicker.addEventListener('color-change', (e) => {
         const color = e.detail.color;
         this.ui.editor.toolConfig.set("color", color);
+        
+        // Update recent colors grid to show current selection
+        const newGrid = this._createRecentColorsGrid();
+        if (this.recentColors.length > 0) {
+          recentColorsGrid.replaceWith(newGrid);
+        }
       });
     }
   
@@ -331,11 +469,6 @@ class Toolbar extends LitElement {
       this.colorPicker.setColor(current);
     }
   }
-  
-
-  
-  
-  
 
   async _removeLayer() {
     const editor = this.ui.editor;
